@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rice Timer</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+    body {
+        font-family: 'Noto Sans KR', sans-serif;
+        background-color: #f4f6f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        color: #333;
+        flex-direction: column;
+    }
+
+    #landingPage, #appContainer {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        text-align: center;
+        max-width: 400px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #appContainer {
+        display: none;
+    }
+
+    .landing-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ff6b6b;
+        margin-bottom: 15px;
+        line-height: 1.3;
+    }
+
+    .landing-desc {
+        font-size: 15px;
+        color: #666;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    .start-btn {
+        background-color: #ff6b6b;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .start-btn:hover {
+        background-color: #fa5252;
+        transform: translateY(-2px);
+    }
+
+    .timer-circle {
+        width: 250px;
+        height: 250px;
+        border-radius: 50%;
+        background: conic-gradient(#ff6b6b 100%, #eee 0);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto 30px;
+        position: relative;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+    }
+
+    .timer-inner {
+        width: 230px;
+        height: 230px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .time-inputs {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .time-input {
+        width: 70px;
+        border: none;
+        font-size: 48px;
+        font-weight: 700;
+        text-align: center;
+        color: #333;
+        background: transparent;
+        outline: none;
+        padding: 0;
+    }
+
+    .time-separator {
+        font-size: 48px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .quick-adds {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .quick-btn {
+        background: #f1f3f5;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #495057;
+        transition: background 0.2s;
+    }
+
+    .quick-btn:hover {
+        background: #e9ecef;
+    }
+
+    .controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        color: white;
+    }
+
+    .btn-play { background-color: #ff6b6b; }
+    .btn-stop { background-color: #868e96; }
+    .btn:hover { opacity: 0.9; }
+
+    .settings {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: left;
+        margin-bottom: 20px;
+    }
+
+    .setting-group {
+        margin-bottom: 15px;
+    }
+
+    .setting-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .setting-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #495057;
+    }
+
+    .setting-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .setting-header .setting-label {
+        margin-bottom: 0;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider { background-color: #ff6b6b; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .tts-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        box-sizing: border-box;
+        font-family: inherit;
+        resize: none;
+        height: 60px;
+    }
+
+    .char-count {
+        text-align: right;
+        font-size: 12px;
+        color: #868e96;
+        margin-top: 5px;
+    }
+
+    .select-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        font-family: inherit;
+        background: white;
+        margin-bottom: 10px;
+    }
+
+    .custom-file-input {
+        display: none;
+        width: 100%;
+        padding: 8px;
+        font-size: 12px;
+        border: 1px dashed #ced4da;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .copyright {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #adb5bd;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+<div id="landingPage">
+    <div class="landing-title">모두를 위한 타이머,<br>rice timer를 만나보세요!</div>
+    <div class="landing-desc">
+        다양한 알람과 기능을 제공합니다!<br>또한 이 서비스는 완전 무료입니다!<br>지금 바로 rice timer를 만나보세요!
+    </div>
+    <button class="start-btn" onclick="startApp()">rice timer 사용하기</button>
+    <div class="copyright">copyright 2026 super rice jamjam studio</div>
+</div>
+
+<div id="appContainer">
+    <div class="timer-circle" id="progressCircle">
+        <div class="timer-inner">
+            <div class="time-inputs">
+                <input type="text" id="minInput" class="time-input" value="00" maxlength="2" onchange="formatInput(this); updateTimerFromInput();">
+                <span class="time-separator">:</span>
+                <input type="text" id="secInput" class="time-input" value="00" maxlength="2" onchange="formatInput(this); updateTimerFromInput();">
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-adds">
+        <button class="quick-btn" onclick="addTime(10)">+10초</button>
+        <button class="quick-btn" onclick="addTime(30)">+30초</button>
+        <button class="quick-btn" onclick="addTime(60)">+1분</button>
+        <button class="quick-btn" onclick="addTime(300)">+5분</button>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-play" id="playBtn" onclick="toggleTimer()">시작</button>
+        <button class="btn btn-stop" onclick="resetTimer()">초기화</button>
+    </div>
+
+    <div class="settings">
+        <div class="setting-group">
+            <div class="setting-header">
+                <span class="setting-label">알람 소리</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="soundToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <select id="alarmSound" class="select-input" onchange="handleSoundChange()">
+                <option value="tts">TTS (텍스트 읽어주기)</option>
+                <option value="six seven!">six seven!</option>
+                <option value="안녕하세요">안녕하세요</option>
+                <option value="에휴우우우우우우우~~!">에휴우우우우우우우~~!</option>
+                <option value="생일축하 노래">생일축하 노래</option>
+                <option value="연속 삐소리">연속 삐소리</option>
+                <option value="시스템 오류!">시스템 오류!</option>
+                <option value="custom">커스텀 알람 (내 파일)</option>
+            </select>
+            <input type="file" id="customAudio" class="custom-file-input" accept="audio/*" onchange="loadCustomAudio(event)">
+            
+            <textarea id="ttsText" class="tts-input" placeholder="종료 시 읽어줄 문장을 입력하세요." maxlength="100" oninput="updateCharCount()"></textarea>
+            <div class="char-count"><span id="charCount">0</span>/100</div>
+        </div>
+
+        <div class="setting-group">
+            <div class="setting-header">
+                <span class="setting-label">진동</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="vibToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <select id="vibPattern" class="select-input">
+                <option value="sync">알람 동기화</option>
+                <option value="long">길게 (5초)</option>
+                <option value="sos">SOS 모스부호</option>
+            </select>
+        </div>
+
+        <div class="setting-group">
+            <div class="setting-header">
+                <span class="setting-label">알람 무한 반복</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="repeatToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="copyright">copyright 2026 super rice jamjam studio</div>
+</div>
+
+<script>
+    let timeLeft = 0;
+    let totalTime = 0;
+    let timerInterval;
+    let isRunning = false;
+    let customAudioUrl = null;
+    let currentAudioElement = null;
+    let repeatInterval = null;
+    let isAlarming = false;
+
+    document.addEventListener('click', () => {
+        if (isAlarming) {
+            stopAlarm();
+        }
+    });
+
+    document.getElementById('appContainer').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (isAlarming) stopAlarm();
+    });
+
+    function startApp() {
+        document.getElementById('landingPage').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'block';
+    }
+
+    function handleSoundChange() {
+        const sound = document.getElementById('alarmSound').value;
+        const ttsInput = document.getElementById('ttsText');
+        const customInput = document.getElementById('customAudio');
+        const charCount = document.querySelector('.char-count');
+
+        ttsInput.style.display = 'none';
+        charCount.style.display = 'none';
+        customInput.style.display = 'none';
+
+        if (sound === 'tts') {
+            ttsInput.style.display = 'block';
+            charCount.style.display = 'block';
+        } else if (sound === 'custom') {
+            customInput.style.display = 'block';
+        } else {
+            playSound(sound, false);
+        }
+    }
+
+    function loadCustomAudio(event) {
+        const file = event.target.files[0];
+        if (file) {
+            customAudioUrl = URL.createObjectURL(file);
+            playSound('custom', false);
+        }
+    }
+
+    function updateCharCount() {
+        const text = document.getElementById('ttsText').value;
+        document.getElementById('charCount').textContent = text.length;
+    }
+
+    function formatInput(input) {
+        let val = parseInt(input.value);
+        if (isNaN(val)) val = 0;
+        if (input.id === 'secInput' && val > 59) val = 59;
+        input.value = val.toString().padStart(2, '0');
+    }
+
+    function updateTimerFromInput() {
+        const m = parseInt(document.getElementById('minInput').value) || 0;
+        const s = parseInt(document.getElementById('secInput').value) || 0;
+        timeLeft = (m * 60) + s;
+        totalTime = timeLeft;
+        updateDisplay();
+        if (timeLeft > 0) {
+            startTimer();
+        } else {
+            resetTimer();
+        }
+    }
+
+    function addTime(seconds) {
+        timeLeft += seconds;
+        totalTime = timeLeft;
+        updateDisplay();
+        startTimer();
+    }
+
+    function updateDisplay() {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        document.getElementById('minInput').value = m.toString().padStart(2, '0');
+        document.getElementById('secInput').value = s.toString().padStart(2, '0');
+
+        const circle = document.getElementById('progressCircle');
+        if (totalTime > 0) {
+            const percentage = (timeLeft / totalTime) * 100;
+            circle.style.background = `conic-gradient(#ff6b6b ${percentage}%, #eee 0)`;
+        } else {
+            circle.style.background = `conic-gradient(#eee 100%, #eee 0)`;
+        }
+    }
+
+    function toggleTimer() {
+        if (isRunning) {
+            clearInterval(timerInterval);
+            document.getElementById('playBtn').textContent = '계속';
+            isRunning = false;
+        } else {
+            const m = parseInt(document.getElementById('minInput').value) || 0;
+            const s = parseInt(document.getElementById('secInput').value) || 0;
+            const newTotal = (m * 60) + s;
+            
+            if (newTotal === 0) return;
+            
+            if (timeLeft === 0 || newTotal !== totalTime) {
+                timeLeft = newTotal;
+                totalTime = newTotal;
+            }
+            startTimer();
+        }
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        isRunning = true;
+        document.getElementById('playBtn').textContent = '일시정지';
+        
+        timerInterval = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateDisplay();
+            } else {
+                clearInterval(timerInterval);
+                isRunning = false;
+                document.getElementById('playBtn').textContent = '시작';
+                triggerAlarm();
+            }
+        }, 1000);
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        timeLeft = 0;
+        totalTime = 0;
+        updateDisplay();
+        document.getElementById('playBtn').textContent = '시작';
+        stopAlarm();
+    }
+
+    function triggerAlarm() {
+        isAlarming = true;
+        const soundType = document.getElementById('alarmSound').value;
+        const isRepeat = document.getElementById('repeatToggle').checked;
+
+        playFullAlarm(soundType);
+
+        if (isRepeat) {
+            repeatInterval = setInterval(() => {
+                playFullAlarm(soundType);
+            }, 3000);
+        }
+    }
+
+    function playFullAlarm(soundType) {
+        if (document.getElementById('soundToggle').checked) {
+            playSound(soundType, true);
+        }
+        if (document.getElementById('vibToggle').checked && "vibrate" in navigator) {
+            playVibration(soundType);
+        }
+    }
+
+    function stopAlarm() {
+        isAlarming = false;
+        clearInterval(repeatInterval);
+        if (currentAudioElement) {
+            currentAudioElement.pause();
+            currentAudioElement.currentTime = 0;
+        }
+        window.speechSynthesis.cancel();
+        if ("vibrate" in navigator) {
+            navigator.vibrate(0);
+        }
+    }
+
+    function playSound(type, isEndAlarm) {
+        if (currentAudioElement) {
+            currentAudioElement.pause();
+            currentAudioElement.currentTime = 0;
+        }
+        window.speechSynthesis.cancel();
+
+        if (type === 'tts') {
+            const text = document.getElementById('ttsText').value || "시간이 다 되었습니다.";
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            window.speechSynthesis.speak(utterance);
+        } else if (type === 'custom') {
+            if (customAudioUrl) {
+                currentAudioElement = new Audio(customAudioUrl);
+                currentAudioElement.play().catch(e => console.log(e));
+            }
+        } else {
+            currentAudioElement = new Audio(type + '.mp3');
+            currentAudioElement.play().catch(e => {
+                currentAudioElement = new Audio(type + '.wav');
+                currentAudioElement.play().catch(e => console.log(e));
+            });
+        }
+    }
+
+    function playVibration(soundType) {
+        const mode = document.getElementById('vibPattern').value;
+        
+        if (mode === 'long') {
+            navigator.vibrate(5000);
+        } else if (mode === 'sos') {
+            navigator.vibrate([100, 100, 100, 100, 100, 300, 300, 100, 300, 100, 300, 300, 100, 100, 100, 100, 100]);
+        } else {
+            if (soundType === '안녕하세요') {
+                navigator.vibrate([100, 100, 100, 100, 100, 100, 100, 100, 100]);
+            } else if (soundType === '에휴우우우우우우우~~!') {
+                navigator.vibrate([250, 100, 1000]);
+            } else if (soundType === 'six seven!') {
+                navigator.vibrate([212.5, 125, 125, 125, 250, 125, 1000]);
+            } else {
+                navigator.vibrate([500, 200, 500, 200, 500]);
+            }
+        }
+    }
+</script>
+</body>
+</html>
