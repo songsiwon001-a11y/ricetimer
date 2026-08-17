@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rice Jump! Gallery!</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@500;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #05070f;
+      color: #f1f5f9;
+      user-select: none;
+      overflow-x: hidden;
+    }
+    .font-game { font-family: 'Press Start 2P', cursive; }
+    .font-digital { font-family: 'Orbitron', sans-serif; }
+    .rainbow-text {
+      background: linear-gradient(to right, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbow-scroll 3s linear infinite;
+    }
+    @keyframes rainbow-scroll {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .gallery-card { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .gallery-card:hover { transform: translateY(-4px); }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen items-center justify-between p-4 md:p-8">
+
+  <script>
+    const sfxSelect = new Audio('select_game.mp3');
+    const sfxJump = new Audio('jump!.mp3');
+    const sfxBgmMenu = new Audio('select_game_2.mp3');
+    const sfxIntro = new Audio('rice_jump_galary!.mp3');
+    const sfxDie = new Audio('die.mp3');
+    const sfxItem = new Audio('item_2.wav');
+    const sfxGun = new Audio('gun_shoot!_2.mp3');
+
+    function playAudio(audioObj, loop = false) {
+      try {
+        audioObj.currentTime = 0;
+        audioObj.loop = loop;
+        audioObj.play().catch(e => {});
+      } catch (e) {}
+    }
+
+    function stopAudio(audioObj) {
+      try {
+        audioObj.pause();
+        audioObj.currentTime = 0;
+      } catch (e) {}
+    }
+
+    function startIntroBgm() { playAudio(sfxIntro, true); }
+    function stopIntroBgm() { stopAudio(sfxIntro); }
+    function startMenuBgmLoop() { playAudio(sfxBgmMenu, true); }
+    function stopMenuBgmLoop() { stopAudio(sfxBgmMenu); }
+  </script>
+
+  <div id="splashScreen" onclick="handleSplashTap()" class="fixed inset-0 bg-[#05070f] z-50 flex flex-col items-center justify-center cursor-pointer transition-opacity duration-700 p-4">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.1)_0,transparent_70%)] pointer-events-none"></div>
+    <div id="splashContent" class="flex flex-col items-center text-center">
+      <div class="p-5 bg-amber-950/85 rounded-3xl border-2 border-amber-500 shadow-2xl shadow-amber-500/20 mb-6 animate-bounce duration-1000">
+        <i data-lucide="sparkles" class="w-16 h-16 text-amber-400"></i>
+      </div>
+      <h1 id="splashTitle" class="text-4xl sm:text-7xl font-black font-game tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 mb-4 drop-shadow-[0_5px_15px_rgba(245,158,11,0.4)]">
+        RICE JUMP! <span class="rainbow-text">GALLERY!</span>
+      </h1>
+      <p id="splashSubText" class="text-sm sm:text-lg text-amber-300 font-digital tracking-widest animate-pulse mb-8">
+        ✨ 화면 아무 곳이나 탭하여 시작하세요! ✨
+      </p>
+    </div>
+    <div id="splashActionBox" class="hidden flex flex-col items-center gap-4 z-10 animate-fade-in">
+      <button onclick="event.stopPropagation(); enterGalleryMenu();" class="px-10 py-5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:scale-105 active:scale-95 text-slate-950 font-game text-xl sm:text-2xl rounded-2xl shadow-[0_0_30px_rgba(245,158,11,0.6)] border-4 border-amber-300 transition-all duration-300 flex items-center gap-3 cursor-pointer">
+        <i data-lucide="play-circle" class="w-8 h-8"></i> GAME START!
+      </button>
+      <span class="text-xs text-slate-500 font-digital">&copy; Super Rice JamJam Studio. All rights reserved.</span>
+    </div>
+  </div>
+
+  <div id="galleryMenu" class="fixed inset-0 bg-[#070b19] z-40 hidden flex flex-col items-center justify-between p-4 md:p-8 overflow-y-auto">
+    <div class="w-full max-w-4xl flex justify-between items-center bg-slate-900/90 border-2 border-amber-500/50 rounded-2xl p-4 shadow-xl mb-6">
+      <div class="flex items-center gap-3">
+        <div class="px-3 py-1.5 bg-amber-500 text-slate-950 font-game text-xs rounded font-black">GALLERY HUB</div>
+        <h2 class="text-xl sm:text-2xl font-black font-digital text-amber-400">RICE JUMP! GALLERY!</h2>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400 font-digital">🎯 화살표 키 또는 터치로 선택 후 실행하세요</span>
+      </div>
+    </div>
+
+    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 my-auto">
+      <div onclick="handleCardClick(0)" id="card-0" class="gallery-card group bg-slate-900/90 border-2 border-slate-800 hover:border-cyan-400 rounded-3xl p-6 flex flex-col justify-between cursor-pointer shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl group-hover:bg-cyan-500/25 transition"></div>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="px-3 py-1 bg-cyan-950 text-cyan-400 font-digital font-bold text-xs rounded-full border border-cyan-500/30">Version 1.0</span>
+            <span id="badge-0" class="text-2xl"></span>
+          </div>
+          <h3 class="text-2xl font-bold text-white group-hover:text-cyan-300 font-digital mb-4">Rice Jump!</h3>
+        </div>
+        <button class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-cyan-600/20">
+          <i data-lucide="external-link" class="w-4 h-4"></i><span>접속하기</span>
+        </button>
+      </div>
+
+      <div onclick="handleCardClick(1)" id="card-1" class="gallery-card group bg-slate-900/90 border-2 border-slate-800 hover:border-orange-400 rounded-3xl p-6 flex flex-col justify-between cursor-pointer shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-orange-500/10 rounded-full blur-xl group-hover:bg-orange-500/25 transition"></div>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="px-3 py-1 bg-orange-950 text-orange-400 font-digital font-bold text-xs rounded-full border border-orange-500/30">Version 2.0</span>
+            <span id="badge-1" class="text-2xl"></span>
+          </div>
+          <h3 class="text-2xl font-bold text-white group-hover:text-orange-300 font-digital mb-4">Rice Jump! 2</h3>
+        </div>
+        <button class="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-orange-600/20">
+          <i data-lucide="external-link" class="w-4 h-4"></i><span>접속하기</span>
+        </button>
+      </div>
+
+      <div onclick="handleCardClick(2)" id="card-2" class="gallery-card group bg-slate-900/90 border-2 border-slate-800 hover:border-purple-400 rounded-3xl p-6 flex flex-col justify-between cursor-pointer shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/25 transition"></div>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="px-3 py-1 bg-purple-950 text-purple-400 font-digital font-bold text-xs rounded-full border border-purple-500/30">Version 3.0</span>
+            <span id="badge-2" class="text-2xl"></span>
+          </div>
+          <h3 class="text-2xl font-bold text-white group-hover:text-purple-300 font-digital mb-4">Rice Jump! 3</h3>
+        </div>
+        <button class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-purple-600/20">
+          <i data-lucide="external-link" class="w-4 h-4"></i><span>접속하기</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="w-full max-w-4xl mt-4">
+      <div onclick="handleCardClick(3)" id="card-3" class="gallery-card group bg-[#8b9bb4]/10 border-2 border-slate-800 hover:border-emerald-400 rounded-3xl p-6 flex flex-col sm:flex-row justify-between items-center cursor-pointer shadow-2xl relative overflow-hidden">
+        <div class="absolute inset-0 bg-emerald-500/5 opacity-50 pointer-events-none"></div>
+        <div class="flex items-center gap-4 mb-4 sm:mb-0">
+          <div class="w-14 h-14 bg-emerald-950/80 rounded-2xl border border-emerald-500/50 flex items-center justify-center font-game text-emerald-400 text-xl shadow-inner">
+            LCD
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2.5 py-0.5 bg-emerald-950 text-emerald-400 font-digital font-bold text-[10px] rounded-full border border-emerald-500/30">RETRO EDITION</span>
+              <span id="badge-3" class="text-xl"></span>
+            </div>
+            <h3 class="text-2xl font-bold text-white group-hover:text-emerald-300 font-digital">Rice Jump! LCD</h3>
+            <p class="text-xs text-emerald-400/80 font-digital mt-1">&#127911; 클래식 LCD 핸드헬드 스테이지 클리어 게임</p>
+          </div>
+        </div>
+        <button class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-600/20">
+          <i data-lucide="gamepad-2" class="w-4 h-4"></i><span>LCD 플레이</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="w-full max-w-4xl text-center text-xs text-slate-500 font-digital py-2">
+      &#128161; 방향키(&larr;, &rarr;, &uarr;, &darr;)로 이동하고 Enter/Space 또는 두 번 탭하여 실행하세요.
+    </div>
+  </div>
+
+  <div id="lcdModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#9ead86] border-8 border-[#3b4431] rounded-3xl p-6 w-full max-w-xl shadow-[0_0_50px_rgba(157,173,134,0.4)] text-[#2d3325] flex flex-col items-center relative overflow-hidden">
+      <div class="w-full flex justify-between items-center mb-3 px-2 border-b-2 border-[#556045] pb-2">
+        <div class="font-game text-xs tracking-wider">RICE JUMP! LCD ver</div>
+        <div class="font-digital text-sm font-bold flex gap-4">
+          <span>STAGE: <span id="lcdStage">1</span></span>
+          <span>SCORE: <span id="lcdScore">0</span></span>
+        </div>
+        <button onclick="closeLcdGame()" class="w-8 h-8 rounded-full bg-[#556045] text-[#9ead86] flex items-center justify-center font-bold hover:bg-[#2d3325] transition">&times;</button>
+      </div>
+
+      <div class="relative w-full aspect-[2/1] bg-[#8c9c74] border-4 inset-2 border-[#556045] rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+        <div class="absolute inset-0 opacity-15 pointer-events-none flex flex-col justify-around">
+          <div class="w-full h-px bg-[#2d3325]"></div>
+          <div class="w-full h-px bg-[#2d3325]"></div>
+          <div class="w-full h-px bg-[#2d3325]"></div>
+        </div>
+
+        <canvas id="lcdCanvas" class="w-full h-full block"></canvas>
+
+        <div id="lcdMsg" class="absolute inset-0 bg-[#9ead86]/90 flex flex-col items-center justify-center text-center p-4">
+          <h3 class="font-game text-xl mb-2 text-[#2d3325]">RICE JUMP! LCD</h3>
+          <p class="font-digital text-xs mb-4">장애물을 피하고 쌀알 및 물총 아이템을 획득해 스위치에 도달하세요!</p>
+          <button onclick="startLcdGame()" class="px-6 py-2.5 bg-[#3b4431] text-[#9ead86] font-game text-xs rounded-xl shadow-lg hover:scale-105 transition">GAME START</button>
+        </div>
+      </div>
+
+      <div class="w-full flex justify-between items-center mt-6 px-4">
+        <div class="flex gap-2">
+          <button onclick="lcdJump()" class="w-18 h-16 bg-[#556045] hover:bg-[#434c35] active:scale-95 text-[#9ead86] font-game text-xs rounded-2xl border-2 border-[#2d3325] shadow-md flex flex-col items-center justify-center cursor-pointer">
+            <span>&</span><span class="text-[9px] mt-0.5">JUMP</span>
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="lcdShoot()" id="shootBtn" class="w-18 h-16 bg-[#434c35] hover:bg-[#353d29] active:scale-95 text-[#9ead86] font-game text-xs rounded-2xl border-2 border-[#2d3325] shadow-md flex flex-col items-center justify-center cursor-pointer opacity-50 pointer-events-none transition">
+            <span>&#128166;</span><span class="text-[9px] mt-0.5">FIRE</span>
+          </button>
+        </div>
+        <div class="text-center font-digital text-[10px] text-[#434c35] hidden sm:block">
+          [SPACE/&uarr;] 점프 | [SHIFT] 물총 발사
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeLcdGame()" class="px-4 py-3 bg-[#556045] hover:bg-[#434c35] text-[#9ead86] font-game text-[10px] rounded-xl border-2 border-[#2d3325] cursor-pointer">EXIT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="w-full max-w-5xl text-center text-[11px] text-slate-600 mt-6 border-t border-slate-900 pt-3">
+    <p>&copy; Super Rice JamJam Studio. All rights reserved.</p>
+  </footer>
+
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 bg-slate-900 border border-amber-500/30 text-amber-200 rounded-xl text-xs flex items-center gap-2 shadow-2xl opacity-0 translate-y-4 pointer-events-none transition-all duration-300 z-50">
+    <i data-lucide="bell" class="w-4 h-4 text-amber-400"></i>
+    <span id="toastMsg">알림 메시지</span>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    let selectedCardIndex = 0;
+    const totalCards = 4;
+    const targetDomains = [
+      "https://ricejump.kro.kr",
+      "https://ricejump2.kro.kr",
+      "https://ricejump3.kro.kr",
+      "LCD_GAME"
+    ];
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+      }, 2500);
+    }
+
+    let splashState = 0;
+
+    function handleSplashTap() {
+      if (splashState === 0) {
+        splashState = 1;
+        startIntroBgm();
+        document.getElementById('splashSubText').classList.add('hidden');
+        document.getElementById('splashActionBox').classList.remove('hidden');
+        showToast("✨ 타이틀 화면에 오신 것을 환영합니다!");
+      }
+    }
+
+    function enterGalleryMenu() {
+      stopIntroBgm();
+      startMenuBgmLoop();
+
+      const splash = document.getElementById('splashScreen');
+      splash.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => splash.remove(), 700);
+
+      document.getElementById('galleryMenu').classList.remove('hidden');
+      updateCardHighlight();
+      showToast("✨ 갤러리 메뉴가 시작되었습니다!");
+    }
+
+    function handleCardClick(index) {
+      if (selectedCardIndex === index) {
+        redirectToDomain(index);
+      } else {
+        selectedCardIndex = index;
+        playAudio(sfxSelect);
+        updateCardHighlight();
+        showToast("✨ 게임이 선택되었습니다. 한 번 더 누르면 실행됩니다.");
+      }
+    }
+
+    function redirectToDomain(index) {
+      stopMenuBgmLoop();
+      playAudio(sfxSelect);
+      selectedCardIndex = index;
+      updateCardHighlight();
+
+      const target = targetDomains[index];
+      if (target === "LCD_GAME") {
+        showToast("🎮 Rice Jump! LCD 버전을 실행합니다!");
+        setTimeout(() => {
+          openLcdGame();
+        }, 400);
+      } else {
+        showToast("🚀 해당 월드로 이동합니다...");
+        setTimeout(() => {
+          try {
+            window.location.href = target;
+          } catch (e) {
+            window.open(target, '_blank');
+          }
+        }, 600);
+      }
+    }
+
+    function updateCardHighlight() {
+      for (let i = 0; i < totalCards; i++) {
+        const cardEl = document.getElementById('card-' + i);
+        const badgeEl = document.getElementById('badge-' + i);
+        
+        if (i === selectedCardIndex) {
+          if (i === 3) {
+            cardEl.classList.add('border-emerald-400', 'bg-emerald-950/40', 'scale-[1.02]');
+            cardEl.classList.remove('border-slate-800', 'bg-[#8b9bb4]/10');
+          } else {
+            cardEl.classList.add('border-amber-400', 'bg-slate-800/90', 'scale-[1.03]');
+            cardEl.classList.remove('border-slate-800', 'bg-slate-900/90');
+          }
+          badgeEl.textContent = '🌾';
+        } else {
+          if (i === 3) {
+            cardEl.classList.remove('border-emerald-400', 'bg-emerald-950/40', 'scale-[1.02]');
+            cardEl.classList.add('border-slate-800', 'bg-[#8b9bb4]/10');
+          } else {
+            cardEl.classList.remove('border-amber-400', 'bg-slate-800/90', 'scale-[1.03]');
+            cardEl.classList.add('border-slate-800', 'bg-slate-900/90');
+          }
+          badgeEl.textContent = '';
+        }
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const menu = document.getElementById('galleryMenu');
+      const lcdModal = document.getElementById('lcdModal');
+
+      if (!lcdModal.classList.contains('hidden')) {
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+          lcdJump();
+          e.preventDefault();
+        } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyF') {
+          lcdShoot();
+          e.preventDefault();
+        } else if (e.code === 'Escape') {
+          closeLcdGame();
+          e.preventDefault();
+        }
+        return;
+      }
+
+      if (!menu.classList.contains('hidden')) {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+          playAudio(sfxSelect);
+          selectedCardIndex = (selectedCardIndex - 1 + totalCards) % totalCards;
+          updateCardHighlight();
+          e.preventDefault();
+        } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+          playAudio(sfxSelect);
+          selectedCardIndex = (selectedCardIndex + 1 + totalCards) % totalCards;
+          updateCardHighlight();
+          e.preventDefault();
+        } else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'ArrowDown' || e.code === 'KeyS') {
+          playAudio(sfxSelect);
+          if (selectedCardIndex === 3) {
+            selectedCardIndex = 1;
+          } else {
+            selectedCardIndex = 3;
+          }
+          updateCardHighlight();
+          e.preventDefault();
+        } else if (e.code === 'Enter' || e.code === 'Space') {
+          redirectToDomain(selectedCardIndex);
+          e.preventDefault();
+        }
+      }
+    });
+
+    let lcdAnimId = null;
+    let lcdGameRunning = false;
+    let lcdScore = 0;
+    let lcdStage = 1;
+    let player = { x: 50, y: 120, vy: 0, gravity: 0.6, jumpPower: -10, isGrounded: true, size: 20, hasWaterGun: false };
+    let obstacles = [];
+    let items = [];
+    let waterBullets = [];
+    let waterGunItem = null;
+    let switchObj = { x: 750, y: 110, w: 25, h: 30, active: false };
+    let gameDist = 0;
+
+    function openLcdGame() {
+      document.getElementById('lcdModal').classList.remove('hidden');
+      resetLcdGame();
+    }
+
+    function closeLcdGame() {
+      document.getElementById('lcdModal').classList.add('hidden');
+      lcdGameRunning = false;
+      if (lcdAnimId) cancelAnimationFrame(lcdAnimId);
+      startMenuBgmLoop();
+    }
+
+    function startLcdGame() {
+      playAudio(sfxSelect);
+      stopMenuBgmLoop();
+      document.getElementById('lcdMsg').classList.add('hidden');
+      resetLcdGame();
+      lcdGameRunning = true;
+      lcdLoop();
+    }
+
+    function resetLcdGame() {
+      lcdScore = 0;
+      gameDist = 0;
+      player.y = 120;
+      player.vy = 0;
+      player.isGrounded = true;
+      player.hasWaterGun = false;
+      
+      obstacles = [];
+      items = [];
+      waterBullets = [];
+      
+      document.getElementById('shootBtn').classList.add('opacity-50', 'pointer-events-none');
+      
+      const obstacleCount = 3 + Math.floor(Math.random() * 4);
+      let lastObsX = 220;
+      for (let i = 0; i < obstacleCount; i++) {
+        lastObsX += 140 + Math.floor(Math.random() * 100);
+        obstacles.push({
+          x: lastObsX,
+          y: 125,
+          w: 12 + Math.floor(Math.random() * 8),
+          h: 12 + Math.floor(Math.random() * 8)
+        });
+      }
+
+      const itemCount = 4 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < itemCount; i++) {
+        items.push({
+          x: 160 + i * 110 + Math.floor(Math.random() * 60),
+          y: 115,
+          w: 12,
+          h: 12,
+          collected: false
+        });
+      }
+
+      waterGunItem = {
+        x: 350 + Math.floor(Math.random() * 200),
+        y: 110,
+        w: 16,
+        h: 16,
+        collected: false
+      };
+
+      switchObj.x = lastObsX + 200 + Math.floor(Math.random() * 150);
+      switchObj.active = false;
+
+      document.getElementById('lcdScore').textContent = lcdScore;
+      document.getElementById('lcdStage').textContent = lcdStage;
+    }
+
+    function lcdJump() {
+      if (!lcdGameRunning) return;
+      if (player.isGrounded) {
+        playAudio(sfxJump);
+        player.vy = player.jumpPower;
+        player.isGrounded = false;
+      }
+    }
+
+    function lcdShoot() {
+      if (!lcdGameRunning || !player.hasWaterGun) return;
+      playAudio(sfxGun);
+      waterBullets.push({
+        x: player.x + 20,
+        y: player.y + 10,
+        vx: 6,
+        w: 8,
+        h: 4
+      });
+    }
+
+    function lcdLoop() {
+      if (!lcdGameRunning) return;
+
+      const canvas = document.getElementById('lcdCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+
+      gameDist += 2.5;
+      document.getElementById('lcdScore').textContent = lcdScore;
+
+      player.vy += player.gravity;
+      player.y += player.vy;
+      const groundLevel = canvas.height - 35;
+      if (player.y >= groundLevel) {
+        player.y = groundLevel;
+        player.vy = 0;
+        player.isGrounded = true;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#3b4431';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, groundLevel + 15);
+      ctx.lineTo(canvas.width, groundLevel + 15);
+      ctx.stroke();
+
+      ctx.fillStyle = '#1d4ed8';
+      waterBullets.forEach((bullet, index) => {
+        bullet.x += bullet.vx;
+        ctx.fillRect(bullet.x - gameDist + 100, bullet.y, bullet.w, bullet.h);
+
+        obstacles.forEach((obs, obsIndex) => {
+          if (
+            bullet.x < obs.x + obs.w &&
+            bullet.x + bullet.w > obs.x &&
+            bullet.y < groundLevel + 15 &&
+            bullet.y + bullet.h > groundLevel + 15 - obs.h
+          ) {
+            obstacles.splice(obsIndex, 1);
+            waterBullets.splice(index, 1);
+            lcdScore += 50;
+          }
+        });
+      });
+
+      ctx.fillStyle = '#2d3325';
+      obstacles.forEach(obs => {
+        obs.x -= 2.5;
+        ctx.beginPath();
+        ctx.roundRect(obs.x, groundLevel + 15 - obs.h, obs.w, obs.h, 4);
+        ctx.fill();
+
+        if (
+          player.x < obs.x + obs.w &&
+          player.x + player.size > obs.x &&
+          player.y + player.size > groundLevel + 15 - obs.h
+        ) {
+          playAudio(sfxDie);
+          lcdGameRunning = false;
+          const msgBox = document.getElementById('lcdMsg');
+          msgBox.classList.remove('hidden');
+          msgBox.querySelector('h3').textContent = "GAME OVER!";
+          msgBox.querySelector('p').textContent = `기록: ${lcdScore}점. 다시 도전하세요!`;
+          msgBox.querySelector('button').textContent = "TRY AGAIN";
+        }
+      });
+
+      items.forEach(item => {
+        const itemScreenX = item.x - gameDist + 100;
+        if (!item.collected) {
+          ctx.fillStyle = '#b5c99a';
+          ctx.beginPath();
+          ctx.ellipse(itemScreenX + 6, groundLevel + 15 - 45, 5, 8, Math.PI / 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (
+            !item.collected &&
+            player.x < itemScreenX + item.w &&
+            player.x + player.size > itemScreenX &&
+            player.y < (groundLevel + 15 - 35) + item.h &&
+            player.y + player.size > (groundLevel + 15 - 55)
+          ) {
+            item.collected = true;
+            lcdScore += 100;
+            playAudio(sfxItem);
+          }
+        }
+      });
+
+      if (waterGunItem && !waterGunItem.collected) {
+        const wgScreenX = waterGunItem.x - gameDist + 100;
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.roundRect(wgScreenX, groundLevel + 15 - 40, waterGunItem.w, waterGunItem.h, 3);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '8px sans-serif';
+        ctx.fillText('🔫', wgScreenX - 2, groundLevel + 15 - 28);
+
+        if (
+          player.x < wgScreenX + waterGunItem.w &&
+          player.x + player.size > wgScreenX &&
+          player.y + player.size > groundLevel + 15 - 50
+        ) {
+          waterGunItem.collected = true;
+          player.hasWaterGun = true;
+          playAudio(sfxItem);
+          document.getElementById('shootBtn').classList.remove('opacity-50', 'pointer-events-none');
+          showToast("💦 특별 물총 아이템 획득! [SHIFT] 또는 발사 버튼을 누르세요!");
+        }
+      }
+
+      const switchScreenX = switchObj.x - gameDist + 100;
+      ctx.fillStyle = switchObj.active ? '#4e5d3d' : '#2d3325';
+      ctx.fillRect(switchScreenX, groundLevel + 15 - 30, 18, 30);
+      ctx.beginPath();
+      ctx.arc(switchScreenX + 9, groundLevel + 15 - 25, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (switchScreenX <= player.x + player.size && !switchObj.active) {
+        switchObj.active = true;
+        playAudio(sfxItem);
+        lcdGameRunning = false;
+        const msgBox = document.getElementById('lcdMsg');
+        msgBox.classList.remove('hidden');
+        msgBox.querySelector('h3').textContent = "STAGE CLEAR! 🌾";
+        msgBox.querySelector('p').textContent = `축하합니다! 스테이지를 클리어했습니다! (최종 점수: ${lcdScore})\n5초 후 다음 스테이지로 넘어갑니다...`;
+        msgBox.querySelector('button').classList.add('hidden');
+        
+        setTimeout(() => {
+          lcdStage++;
+          msgBox.querySelector('button').classList.remove('hidden');
+          startLcdGame();
+        }, 5000);
+      }
+
+      ctx.fillStyle = '#2d3325';
+      ctx.beginPath();
+      ctx.ellipse(player.x + 10, player.y + 10, 9, 12, Math.PI / 6, 0, Math.PI * 2);
+      ctx.fill();
+      if (player.hasWaterGun) {
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(player.x + 12, player.y + 6, 10, 5);
+      }
+
+      lcdAnimId = requestAnimationFrame(lcdLoop);
+    }
+  </script>
+</body>
+</html>
